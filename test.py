@@ -53,8 +53,10 @@ class WPScanVulnerabilityCollector:
             title_text = title_element.get_text().strip()
             
             # 플러그인 이름과 버전 추출
-            # 예: "ActiveDemand plugin for WordPress <= 1.2.0 - Unauthenticated Post Creation/Update/Deletion"
-            plugin_match = re.match(r'^(.+?)\s+(?:plugin\s+for\s+WordPress\s+)?([<>=!]+\s*[\d.]+)\s*-\s*(.+)$', title_text)
+            # 다양한 형태 처리:
+            # "Backup by 10Web <= 1.0.20 - Reflected Cross-Site Scripting (XSS)"
+            # "ActiveDemand plugin for WordPress <= 1.2.0 - Unauthenticated Post Creation/Update/Deletion"
+            plugin_match = re.match(r'^(.+?)\s*(?:plugin\s+for\s+WordPress\s+)?([<>=!]+\s*[\d.]+)\s*[-–]\s*(.+)$', title_text)
             
             if not plugin_match:
                 print(f"❌ 제목 파싱 실패: {title_text}")
@@ -64,8 +66,9 @@ class WPScanVulnerabilityCollector:
             vulnerable_version = plugin_match.group(2).strip()
             vulnerability_name = plugin_match.group(3).strip()
             
-            # "plugin" 단어 제거
-            plugin_name = re.sub(r'\s+plugin$', '', plugin_name, flags=re.IGNORECASE)
+            # "plugin" 단어 제거 및 정리
+            plugin_name = re.sub(r'\s+plugin\s*$', '', plugin_name, flags=re.IGNORECASE)
+            plugin_name = plugin_name.strip()
             
             # 2. 설명 추출
             description = ""
@@ -99,19 +102,27 @@ class WPScanVulnerabilityCollector:
             
             if references_section:
                 # CVE 정보가 있는 데이터 테이블에서 CVE 번호 추출
-                tables = references_section.find_all('table')
-                for table in tables:
-                    rows = table.find_all('tr')
-                    for row in rows:
-                        cells = row.find_all(['td', 'th'])
-                        if len(cells) >= 2:
-                            key = cells[0].get_text().strip().lower()
-                            value = cells[1].get_text().strip()
-                            if 'cve' in key and value.startswith('CVE-'):
-                                cve = value
-                                break
-                    if cve:
-                        break
+                data_table = references_section.find('div', class_='vulnerabilities-single__data-table')
+                if data_table:
+                    data_rows = data_table.find_all('div', class_='vulnerabilities-single__data-row')
+                    for row in data_rows:
+                        title_div = row.find('div', class_='vulnerabilities-single__data-title')
+                        if title_div and 'cve' in title_div.get_text().strip().lower():
+                            value_div = row.find('div', class_='vulnerabilities-single__data-value')
+                            if value_div:
+                                # CVE 링크에서 CVE 번호 추출
+                                cve_link = value_div.find('a')
+                                if cve_link:
+                                    cve_text = cve_link.get_text().strip()
+                                    if cve_text.startswith('CVE-'):
+                                        cve = cve_text
+                                        break
+                                else:
+                                    # 링크가 아닌 경우 직접 텍스트에서 추출
+                                    cve_text = value_div.get_text().strip()
+                                    if cve_text.startswith('CVE-'):
+                                        cve = cve_text
+                                        break
             
             # CVE와 PoC가 모두 있는지 확인
             if not cve or not poc:
@@ -157,9 +168,10 @@ class WPScanVulnerabilityCollector:
             print(f"❌ 파일 읽기 오류: {e}")
             return []
     
-    def collect_vulnerabilities_from_links(self, target_count=100):
+    def collect_vulnerabilities_from_links(self, target_count=6362):
         """poc_links.txt의 링크들을 사용해서 취약점 정보 수집"""
-        print(f"🎯 목표: CVE와 PoC가 모두 있는 취약점 {target_count}개 수집")
+        print(f"🎯 목표: CVE와 PoC가 모두 있는 취약점을 최대한 많이 수집")
+        print(f"📋 총 {target_count}개 링크 처리 예정")
         print("=" * 50)
         
         # 링크 목록 로드
@@ -172,12 +184,8 @@ class WPScanVulnerabilityCollector:
         success_count = 0
         
         for i, url in enumerate(links):
-            if success_count >= target_count:
-                print(f"🎉 목표 달성! {target_count}개 수집 완료")
-                break
-            
             processed_count += 1
-            print(f"\n📈 진행상황: {processed_count}/{len(links)} (성공: {success_count}/{target_count})")
+            print(f"\n📈 진행상황: {processed_count}/{len(links)} (성공: {success_count})")
             
             # 중복 제거
             if any(vuln['url'] == url for vuln in self.vulnerabilities):
@@ -191,11 +199,11 @@ class WPScanVulnerabilityCollector:
                 self.vulnerabilities.append(vulnerability_data)
                 success_count += 1
                 
-                # 10개씩 수집할 때마다 중간 저장
-                if success_count % 10 == 0:
+                # 50개씩 수집할 때마다 중간 저장
+                if success_count % 50 == 0:
                     self.save_to_csv(f'wordpress_vulnerabilities_progress_{success_count}.csv')
                 
-                print(f"🎯 수집 완료: {success_count}/{target_count}")
+                print(f"🎯 수집 완료: {success_count}")
             else:
                 print("❌ 데이터 추출 실패")
             
@@ -242,15 +250,15 @@ def main():
     collector = WPScanVulnerabilityCollector()
     
     # poc_links.txt에서 링크들을 사용해서 취약점 정보 수집
-    vulnerabilities = collector.collect_vulnerabilities_from_links(target_count=100)
+    vulnerabilities = collector.collect_vulnerabilities_from_links(target_count=6362)
     
     if vulnerabilities:
         # 최종 CSV 파일 저장
-        collector.save_to_csv('wordpress_vulnerabilities_final_100.csv')
+        collector.save_to_csv('wordpress_vulnerabilities_final_6362.csv')
         
         print(f"\n🎊 수집 완료!")
         print(f"   - 총 수집된 취약점: {len(vulnerabilities)}개")
-        print(f"   - 파일: wordpress_vulnerabilities_final_100.csv")
+        print(f"   - 파일: wordpress_vulnerabilities_final_6362.csv")
     else:
         print("❌ 수집된 취약점이 없습니다.")
 
